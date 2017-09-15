@@ -3,26 +3,27 @@ This is a program designed to automate many of RS's actions and aims to allow fu
 
 ## Completed Functionality
 Currently the CREATE and LOAD commands are implemented allowing users to create profiles and load them for accessing via other commands.
+
 Additionally, DELETE was just implemented and should be working correctly now, allowing users to delete a profile by specifying its name
 
 ## Docs
 Currently the docs are simply a series of good practices and oddities related to this project. As such, they will be listed numerically for now.
 1. All commands will only look at the first arguments passed to them, any excess will be ignored.
-    *Additionally the order of flags/arguments matters as well, so it's important to be precise
+    * Additionally the order of flags/arguments matters as well, so it's important to be precise
 2. All commands are case-insensitive for ease-of-use and uniformity in the code
-    *However, names, usernames, passwords, etc. passed by the user **ARE** case-sensitive
+    * However, names, usernames, passwords, etc. passed by the user **ARE** case-sensitive
 3. All commands should return a boolean as their first index [0] if they're returning a Tuple
-    *Also, for all functions that return Tuples, when they trigger False they should return 'None' in place of the desired object (e.g. 'return False, None')
+    * Also, for all functions that return Tuples, when they trigger False they should return 'None' in place of the desired object (e.g. 'return False, None')
 4. Priorities have an integer value in the range 0 to 99, with 0 being highest and 99 being lowest priority
 5. Profiles are a customized list of priorities, skill levels, and other character information
-    *It is valid to have multiple profiles for a single character. This allows users to load different priorities of their choosing
+    * It is valid to have multiple profiles for a single character. This allows users to load different priorities of their choosing
 6. When adding or removing a COMMAND be sure to also add or remove it from the HELP command
-    *Add both a short general explanation and a more detailed one for if HELP <COMMAND_NAME> is called
+    * Add both a short general explanation and a more detailed one for if HELP <COMMAND_NAME> is called
 
 ## Features to be Implemented and Bugs to Fix
 1. The HELP command should be clear about the order of arguments mattering and that excess arguments are ignored
 2. Add a flag option for priorities to be randomized on creation of a profile
-    *Alternately, this could even be its own command to be run on the currently loaded profile
+    * Alternately, this could even be its own command to be run on the currently loaded profile
 3. Profile initialization currently intializes everything to level 1 at lowest priority rather than fetching the values
 4. Currently only F2P skills are considered, but implement functionality for member's skills to be considered
 5. Helper functions need to be implemented to read images from the screen and determine the player's location
