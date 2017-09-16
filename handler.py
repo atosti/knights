@@ -1,5 +1,5 @@
-import image
-import mouse
+#import image
+#import mouse
 import profile
 import skill
 import os  # Used to check if a file is empty
@@ -55,35 +55,17 @@ def new_profile_file(profile):
                 '\nUSERNAME=' +             profile.get_username() +
                 '\nPASSWORD=' +             profile.get_password() +
                 '\nCOMBAT_LEVEL=' +         str(profile.get_combat_level()) +
-                '\nATTACK=' +               str(profile.skill_list[0].level) +
-                '\nATTACK_PRIO=' +          str(profile.skill_list[0].priority) +
-                '\nCRAFTING=' +             str(profile.skill_list[1].level) +
-                '\nCRAFTING_PRIO=' +        str(profile.skill_list[1].priority) +
-                '\nDEFENCE=' +              str(profile.skill_list[2].level) +
-                '\nDEFENCE_PRIO=' +         str(profile.skill_list[2].priority) +
-                '\nFISHING=' +              str(profile.skill_list[3].level) +
-                '\nFISHING_PRIO=' +         str(profile.skill_list[3].priority) +
-                '\nHEALTH=' +               str(profile.skill_list[4].level) +
-                '\nHEALTH_PRIO=' +          str(profile.skill_list[4].priority) +
-                '\nMAGIC=' +                str(profile.skill_list[5].level) +
-                '\nMAGIC_PRIO=' +           str(profile.skill_list[5].priority) +
-                '\nMINING=' +               str(profile.skill_list[6].level) +
-                '\nMINING_PRIO=' +          str(profile.skill_list[6].priority) +
-                '\nPRAYER=' +               str(profile.skill_list[7].level) +
-                '\nPRAYER_PRIO=' +          str(profile.skill_list[7].priority) +
-                '\nRANGE=' +                str(profile.skill_list[8].level) +
-                '\nRANGE_PRIO=' +           str(profile.skill_list[8].priority) +
-                '\nRUNECRAFTING=' +         str(profile.skill_list[9].level) +
-                '\nRUNECRAFTING_PRIO=' +    str(profile.skill_list[9].priority) +
-                '\nSMITHING=' +             str(profile.skill_list[10].level) +
-                '\nSMITHING_PRIO=' +        str(profile.skill_list[10].priority) +
-                '\nSTRENGTH=' +             str(profile.skill_list[11].level) +
-                '\nSTRENGTH_PRIO=' +        str(profile.skill_list[11].priority) +
-                '\nWOODCUTTING=' +          str(profile.skill_list[12].level) +
-                '\nWOODCUTTING_PRIO=' +     str(profile.skill_list[12].priority)
+                skill_dict_output_string(profile.skill_dict)
                 )
         return True
 
+#Returns a printable stirng for a given skill dictionary        
+def skill_dict_output_string(skill_dict):
+    string = ""
+    for name, sk in skill_dict.items():
+        string += '\n'+name+ '='+ str(sk.level)
+        string += '\n'+name+'_PRIO='+ str(sk.priority)
+    return string
 
 # Returns a list of all the arguments passed
 def parse_args(input_list):
@@ -97,101 +79,46 @@ def parse_args(input_list):
 def random_priority():
     return random.randint(0, 99)
 
-
-# FIXME - Skill_list is appended via alternation, find a more elegant way to do this that isn't hardcoded to a pattern
-# Reads the content from a profile file and returns a Skill object
-def read_profile(file_path):
-    skill_list = []
+# Reads the content from a profile file and returns a Profile object
+def map_read_profile(file_path):
+    skill_dict = {}
     username = ''
     profile_name = ''
     password = ''
     skill_name = ''
-    level = 0  # Initialized to invalid values
-    current_priority = -1  # Initialized to invalid values
+    combat_level = ''
     with open(file_path) as f:
-        line = f.read().splitlines()
-        for i in range(0, len(line)):
-            inner_line = line[i].split('=')
-            if inner_line[0] == 'NAME':
-                profile_name = inner_line[1]
-            elif inner_line[0] == 'USERNAME':
-                username = inner_line[1]
-            elif inner_line[0] == 'PASSWORD':
-                password = inner_line[1]
-            elif inner_line[0] == 'COMBAT_LEVEL':
-                combat_level = inner_line[1]
-            elif inner_line[0] == 'ATTACK':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'ATTACK_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'CRAFTING':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'CRAFTING_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'DEFENCE':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'DEFENCE_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'FISHING':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'FISHING_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'HEALTH':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'HEALTH_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'MAGIC':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'MAGIC_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'MINING':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'MINING_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'PRAYER':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'PRAYER_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'RANGE':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'RANGE_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'RUNECRAFTING':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'RUNECRAFTING_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'SMITHING':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'SMITHING_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'STRENGTH':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'STRENGTH_PRIO':
-                current_priority = inner_line[1]
-            elif inner_line[0] == 'WOODCUTTING':
-                skill_name = inner_line[0]
-                level = inner_line[1]
-            elif inner_line[0] == 'WOODCUTTING_PRIO':
-                current_priority = inner_line[1]
+        lines = f.read().splitlines()
+        for line in lines:
+            split = line.split('=')
+            identifier = split[0]
+            value = split[1]
+            if identifier == 'NAME':
+                profile_name = value
+            elif identifier == 'USERNAME':
+                username = value
+            elif identifier == 'PASSWORD':
+                password = value
+            elif identifier == 'COMBAT_LEVEL':
+                combat_level = value
+            elif '_PRIO' not in identifier:
+                if identifier in skill_dict:
+                    skill_dict[identifier].level = value
+                else:
+                    sk = skill.Skill(identifier, 0, value)
+                    skill_dict[identifier] = sk
+            elif '_PRIO' in identifier:
+                prio_split = identifier.split('_')
+                dict_identifier = prio_split[0]
+                if dict_identifier in skill_dict:
+                    skill_dict[dict_identifier].priority = value
+                else:
+                    sk = skill.Skill( dict_identifier, value, 0)
+                    skill_dict[dict_identifier] = sk
             else:
-                return False, None
-            if (i % 2) == 1:  # Every two lines, append a skill onto the skill_list
-                skill_list.append(skill.Skill(skill_name, current_priority, level))
-    loaded_profile = profile.Profile(profile_name, username, password, skill_list, combat_level)
+                return False, None       
+    loaded_profile = profile.Profile(profile_name, username, password, skill_dict, combat_level)
     return True, loaded_profile
-
 
 # FIXME - Need to read the values, pass them into a list of skills, then put them into a profile to be returned
 # FIXME - This is largely deprecated, it's probably better to just start new
@@ -210,6 +137,18 @@ def update_profile(file_path):
         current_skill = skill.Skill(contents[i * 2], contents[(i * 2) + 1], 1)  # name, priority, level
         skill_list.append(current_skill)
     return profile.Profile(skill_list, 3)  # FIXME - Find a way to fetch combat level
+
+# Returns a map which contains a string key for each runescape classic skill, values are Skill objects
+def default_skill_map():
+    skill_list = ["ATTACK", "COOKING", "CRAFTING", "DEFENCE", "FIREMAKING", "FISHING","HITPOINTS","MAGIC",
+    "MINING", "PRAYER", "RANGED", "RUNECRAFTING","SMITHING","STRENGTH","WOODCUTTING"]
+    default_priority = 99
+    default_level = 1
+    skill_map = {}
+    for sk in skill_list:
+         skill_map[sk] =  skill.Skill(sk, default_priority, default_level)
+    return skill_map
+
 
 
 # ---Functions for Commands---
@@ -240,22 +179,9 @@ def create(input_list):
                 username = arg_list[i]
             elif i == 2:
                 password = arg_list[i]
-        skill_list = []
-        skill_list.append(skill.Skill("ATTACK", 99, 1))
-        skill_list.append(skill.Skill("CRAFTING", 99, 1))
-        skill_list.append(skill.Skill("DEFENCE", 99, 1))
-        skill_list.append(skill.Skill("FISHING", 99, 1))
-        skill_list.append(skill.Skill("HEALTH", 99, 1))
-        skill_list.append(skill.Skill("MAGIC", 99, 1))
-        skill_list.append(skill.Skill("MINING", 99, 1))
-        skill_list.append(skill.Skill("PRAYER", 99, 1))
-        skill_list.append(skill.Skill("RANGE", 99, 1))
-        skill_list.append(skill.Skill("RUNECRAFTING", 99, 1))
-        skill_list.append(skill.Skill("SMITHING", 99, 1))
-        skill_list.append(skill.Skill("STRENGTH", 99, 1))
-        skill_list.append(skill.Skill("WOODCUTTING", 99, 1))
-        new_profile = profile.Profile(profile_name, username, password, skill_list, 3)
-        new_profile_file(new_profile)
+        skill_map = default_skill_map();
+        new_profile = profile.Profile(profile_name, username, password,skill_map, 3) 
+        new_profile_file(new_profile) 
         return True
 
 
@@ -346,7 +272,7 @@ def load(input_list):
         file_name = arg_list[0] + '.txt'
         file_path = './profiles/' + file_name
         if file_exists(file_name, './profiles/'):
-            result = read_profile(file_path)
+            result = map_read_profile(file_path)
             if result[0]:
                 loaded_profile = result[1]
                 return True, loaded_profile
