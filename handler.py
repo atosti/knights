@@ -4,6 +4,7 @@ import profile
 import skill
 import os  # Used to check if a file is empty
 import random  # Used for random number generation
+import fileinput  # Used for overwriting single lines in files
 # Note: DEFAULT_PROFILE in the initialization.txt takes a file name, so it must be of the form 'my_profile.txt'
 
 # -----Helper Functions-----
@@ -24,9 +25,12 @@ def file_is_empty(file_path):
 # FIXME - How to make it so the exact lines that failed can be returned to main for error-checking?
 # FIXME     -Minor implications right now, but it will matter in the future
 def initialization(file_name, dir_path):
+    result_0 = False
+    result_1 = None
+    total_result = (result_0, result_1)
     if not file_exists(file_name, dir_path):  # If no init file exists, return false and default profile
         result_1 = default_profile()
-        return False, result_1
+        return total_result
     file_path = dir_path + file_name
     with open(file_path) as f:  # Open the init file
         lines = f.read().splitlines()
@@ -197,12 +201,8 @@ def create(input_list):
             return False
         return True
 
-# FIXME - Takes a single argument of profile_name and assigns that as the default profile to be loaded in
-def default(input_list):
-    return False
-
 # FIXME - This should check if the deleted profile is the default one, and then reset the default profile if so
-# FIXME - This should check if they entered a file name (ends in .txt) and if so it should let them use it (as long as its valid)
+# FIXME - This should check if they entered a file name (end in .txt) and if so it should let them use it (as long as its valid)
 def delete(input_list):
     arg_list = parse_args(input_list)
     file_name = arg_list[0] + '.txt'
@@ -334,12 +334,40 @@ def print_command(input_list, profile):
 # This sets the priority of various skills to
 def priority(input_list):
     # FIXME - Have this take a list of <skill, prio, skill, prio, skill, prio...> and optionally a character name?
-    # This will open the file for the proper profile, then find the skilsl that match its args and assign the new priority
+    # This will open the file for the proper profile, then find the skills that match its args and assign the new priority
     return False
     # This should take a series of flags as inputs, such as character name
-    file_open("skill_priorities.txt")  # FIXME - On hold until profiles are done
+
+# FIXME - Put checking if a file ends in '.txt' in its own function and call it here as well as where it was used prior
+# Note: Takes a single argument of profile_name and sets that profile as the default
+# Note: Accepts both profile names and profile file names
+def setdefault(input_list):
+    arg_list = parse_args(input_list)
+    if len(arg_list) < 1:
+        print('Error: No profile name passed.')
+        return False
+    if arg_list[0].endswith('.txt'):
+        file_name = arg_list[0]
+    else:
+        file_name = arg_list[0] + '.txt'
+    if file_exists(file_name, './profiles/'):
+        with open('initialization.txt', 'r+') as f:  # Find the name of the old profile
+            lines = f.read().splitlines()
+            old_profile = ''
+            for i in range(0, len(lines)):
+                item = lines[i].split('=')
+                if item[0] == 'DEFAULT_PROFILE':
+                    if len(item) > 1:
+                        old_profile = item[1]
+                    i = len(lines)  # Exit the loop
+        for line in fileinput.input('initialization.txt', inplace=True):
+            # The comma prevents line breaks, and the end='' prevents a newline character
+            print(line.replace('DEFAULT_PROFILE=' + old_profile, 'DEFAULT_PROFILE=' + file_name), end='')
+        return True
+    else:
+        print('Error: Profile not found.')
+    return False
 
 # FIXME - Want to be able to pause all operations and allow user to manually control their computer
 def stop():
     return False
-

@@ -4,6 +4,7 @@ import profile
 # Note: When adding a randomize() command to create random priorities, it's important to also add a way for skills to
 #       be toggled as inactive, or ignored. That way a character doesn't waste its time on skills that people deem
 #       unimportant to them. This might be best added as a parameter to Skills.
+# Note: Profile names must be the same as their file name in order for some functionalities (such as PRINT) to work
 
 # Run initialization
 result = handler.initialization('initialization.txt', './')
@@ -24,14 +25,12 @@ while input_list[0] != "QUIT":
         handler.create(input_list)
     elif input_list[0] == 'DELETE':
         handler.delete(input_list)
-    elif input_list[0] == 'DEFAULT':
-        handler.default(input_list)
+    elif input_list[0] == 'SETDEFAULT':
+        handler.setdefault(input_list)
     elif input_list[0] == 'HELP':
         handler.help_command(input_list)
     elif input_list[0] == 'LOAD':
-        result = handler.load(input_list)
-        if result[0]:
-            active_profile = result[1]
+        result = handler.load(input_list, active_profile)
     elif input_list[0] == 'LOGIN':
         handler.login(input_list)
     elif input_list[0] == 'PRINT':
