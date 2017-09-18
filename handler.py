@@ -4,10 +4,9 @@ import profile
 import skill
 import os  # Used to check if a file is empty
 import random  # Used for random number generation
-
+# Note: DEFAULT_PROFILE in the initialization.txt takes a file name, so it must be of the form 'myprofile.txt'
 
 # ---Helper Functions---
-# FIXME - implement this into initialization AND load
 # Checks if a file exists, must be passed the full file name for this to work
 def file_exists(file_name, dir_path):
     for file in os.listdir(dir_path):
@@ -20,29 +19,46 @@ def file_is_empty(file_path):
     return os.stat(file_path).st_size == 0
 
 
-# FIXME - How to return a Tuple full of objects that may or may not exist depending on various function calls,
-# FIXME     is the only way to do a large if/else statement? This will matter if I expand this function.
-# Read the initialization file and set a default profile as current_profile
+# Perform initial setup as dictated by the init file
+# Note: As other initialization settings are added, the Tuples must also be extended at each Return
+# FIXME - How to make it so the exact lines that failed can be returned to main for error-checking?
+# FIXME     -Minor implications right now, but it will matter in the future
 def initialization(file_name, dir_path):
-    if not file_exists(file_name, dir_path):  # Check the file exists before attempting to read it
-        return False, None
+    if not file_exists(file_name, dir_path):  # If no init file exists, return false and default profile
+        result_1 = default_profile()
+        return False, result_1
     file_path = dir_path + file_name
-    with open(file_path) as f:
-        init_content = f.read().splitlines()
-        for i in range(0, len(init_content)):
-            inner = init_content[i].split('=')
-            if inner[0] == 'DEFAULT_PROFILE':
-                default_profile_path = './profiles/' + inner[1]
-                result = read_profile(default_profile_path)  # Load the default profile
-                if result[0]:
-                    current_profile = result[1]
-                else:
-                    # FIXME - How to get it so users can reset initialization and default.txt files automatically
-                    # print('Error: Failed to load default profile, reset initialization.txt and default.txt')
-                    1  # Placeholder
-    if result[0]:  # This belongs at the end, because it's the Tuple returned for ALL of initialization's actions
-        return True, current_profile
-    return False, None
+    with open(file_path) as f:  # Open the init file
+        lines = f.read().splitlines()
+        success = []  # A list of whether a each line succeeded
+        for i in range(0, len(lines)):
+            item = lines[i].split('=')
+            if item[0] == 'DEFAULT_PROFILE':  # Set a default profile as the active one
+                if len(item) < 2:  # Check there's a value to the right of the equals sign
+                    result_1 = default_profile()
+                    success.append(False)
+                elif file_exists(item[1], './profiles/'):
+                    path = './profiles/' + item[1]
+                    result = map_read_profile(path)
+                    if result[0]:  # If the profile read succeeds
+                        result_1 = result[1]
+                        success.append(True)
+                    else:
+                        result_1 = default_profile()
+                        success.append(False)
+        result_0 = True  # Initialize to True, then check validity of each success item
+        for i in range(0, len(success)):  # Determine whether to return True or False
+            if not success[i]:
+                result_0 = False
+                i = len(lines)  # Exit loop on first False found
+    total_result = (result_0, result_1)  # [Error bool, active profile]
+    return total_result
+
+
+# Creates and returns a default Profile object
+def default_profile():
+    skill_map = default_skill_map()
+    return profile.Profile('default', '', '', skill_map, '3')
 
 
 # FIXME - Check that the file doesn't already exist, and if it does maybe just overwrite or return an error
@@ -138,6 +154,7 @@ def update_profile(file_path):
         skill_list.append(current_skill)
     return profile.Profile(skill_list, 3)  # FIXME - Find a way to fetch combat level
 
+
 # Returns a map which contains a string key for each runescape classic skill, values are Skill objects
 def default_skill_map():
     skill_list = ["ATTACK", "COOKING", "CRAFTING", "DEFENCE", "FIREMAKING", "FISHING","HITPOINTS","MAGIC",
@@ -150,7 +167,6 @@ def default_skill_map():
     return skill_map
 
 
-
 # ---Functions for Commands---
 def auto():  # Allows the system to take control, deciding the best course of action for the character
     return False
@@ -161,7 +177,7 @@ def auto():  # Allows the system to take control, deciding the best course of ac
 # FIXME - This followed an old format, I'm not sure if it's still valid
 # FIXME     if a profile has no password passed for it, then it should just auto assign a dummy value
 # FIXME - Implement fetching skill levels from searching the username in an API or from screen capture
-# FIXME     they're currently just hardcoded to default values. Could also set prios to random values (I built a func for that)
+# FIXME     they're currently just hardcoded to default values. Could also set prios to random values (func exists)
 def create(input_list):
     arg_list = parse_args(input_list)
     if len(arg_list) < 2:

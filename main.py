@@ -1,16 +1,13 @@
 import handler
 import profile
-# FIXME - Double check that no skills were missed for F2P when creating profiles (i.e. check with the game)
 
-# Load default profile
+# Run initialization
 result = handler.initialization('initialization.txt', './')
-if result[0]:
-    active_profile = result[1]
-else:
-    print('Error: Default profile failed to load. Please manually load one with LOAD before continuing.')
+if not result[0]:
+    print('Error: An initialization parameter failed to load. Check \'initialization.txt\' is correctly formatted.')
 
 # User input loop
-user_input = 'BLANK'  # Initialized to a dummy value
+user_input = 'NONE'  # Initialized to dummy value for index to be in range
 input_list = user_input
 while input_list[0] != "QUIT":
     user_input = input('Commands: ')
