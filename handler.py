@@ -4,23 +4,23 @@ import profile
 import skill
 import os  # Used to check if a file is empty
 import random  # Used for random number generation
-# Note: DEFAULT_PROFILE in the initialization.txt takes a file name, so it must be of the form 'myprofile.txt'
+# Note: DEFAULT_PROFILE in the initialization.txt takes a file name, so it must be of the form 'my_profile.txt'
 
-# ---Helper Functions---
-# Checks if a file exists, must be passed the full file name for this to work
+# -----Helper Functions-----
+# Checks if a file exists, must be passed the full file name
+# FIXME - It now checks that it begins AND ends with the name, this should be even safer but I haven't tested it much.
+# FIXME     if it needs to be reverted, only check that it starts with the file_name.
 def file_exists(file_name, dir_path):
     for file in os.listdir(dir_path):
-        if file.startswith(file_name):
+        if file.startswith(file_name) and file.endswith(file_name):
             return True
     return False
-
 
 def file_is_empty(file_path):
     return os.stat(file_path).st_size == 0
 
-
 # Perform initial setup as dictated by the init file
-# Note: As other initialization settings are added, the Tuples must also be extended at each Return
+# Note: As other initialization settings are added, the Tuples must also be extended at each return
 # FIXME - How to make it so the exact lines that failed can be returned to main for error-checking?
 # FIXME     -Minor implications right now, but it will matter in the future
 def initialization(file_name, dir_path):
@@ -51,21 +51,21 @@ def initialization(file_name, dir_path):
             if not success[i]:
                 result_0 = False
                 i = len(lines)  # Exit loop on first False found
-    total_result = (result_0, result_1)  # [Error bool, active profile]
+    total_result = (result_0, result_1)  # [Error boolean, active profile]
     return total_result
-
 
 # Creates and returns a default Profile object
 def default_profile():
     skill_map = default_skill_map()
     return profile.Profile('default', '', '', skill_map, '3')
 
-
-# FIXME - Check that the file doesn't already exist, and if it does maybe just overwrite or return an error
-# FIXME     implement password and change the format of the file being generated to match the new format
 # FIXME - This needs a better name, but I don't know what to call it
 # Creates a new profile file
 def new_profile_file(profile):
+    file_name = profile.get_name() + '.txt'
+    dir_path = './profiles/'
+    if file_exists(file_name, dir_path):  # Check the file doesn't already exist
+        return False
     with open('profiles/' + profile.name + '.txt', 'w+') as f:
         f.write('NAME=' +                   profile.name +
                 '\nUSERNAME=' +             profile.get_username() +
@@ -75,7 +75,7 @@ def new_profile_file(profile):
                 )
         return True
 
-#Returns a printable stirng for a given skill dictionary        
+# Returns a printable string for a given skill dictionary
 def skill_dict_output_string(skill_dict):
     string = ""
     for name, sk in skill_dict.items():
@@ -89,7 +89,6 @@ def parse_args(input_list):
     for i in range(0, len(input_list) - 1):
         arg_list[i] = input_list[i + 1]
     return arg_list
-
 
 # Returns a random, valid priority (an integer in the range 0 to 99)
 def random_priority():
@@ -154,8 +153,7 @@ def update_profile(file_path):
         skill_list.append(current_skill)
     return profile.Profile(skill_list, 3)  # FIXME - Find a way to fetch combat level
 
-
-# Returns a map which contains a string key for each runescape classic skill, values are Skill objects
+# Returns a map which contains a string key for each Runescape classic skill, values are Skill objects
 def default_skill_map():
     skill_list = ["ATTACK", "COOKING", "CRAFTING", "DEFENCE", "FIREMAKING", "FISHING","HITPOINTS","MAGIC",
     "MINING", "PRAYER", "RANGED", "RUNECRAFTING","SMITHING","STRENGTH","WOODCUTTING"]
@@ -163,18 +161,15 @@ def default_skill_map():
     default_level = 1
     skill_map = {}
     for sk in skill_list:
-         skill_map[sk] =  skill.Skill(sk, default_priority, default_level)
+        skill_map[sk] = skill.Skill(sk, default_priority, default_level)
     return skill_map
 
-
-# ---Functions for Commands---
+# -----Functions for Commands-----
 def auto():  # Allows the system to take control, deciding the best course of action for the character
     return False
     # Create and populate a list of objectives based on user-set goals via the commandline
     # Then either select one at random (to avoid detection) or create an optimal path between the tasks
 
-
-# FIXME - This followed an old format, I'm not sure if it's still valid
 # FIXME     if a profile has no password passed for it, then it should just auto assign a dummy value
 # FIXME - Implement fetching skill levels from searching the username in an API or from screen capture
 # FIXME     they're currently just hardcoded to default values. Could also set prios to random values (func exists)
@@ -185,9 +180,9 @@ def create(input_list):
         return False
     # FIXME - Check if the profile name already exists in a new elif
     else:
-        profile_name = 'BLANK'
-        username = 'BLANK'
-        password = 'BLANK'
+        #profile_name = ''
+        #username = ''
+        password = ''
         for i in range(0, len(arg_list)):
             if i == 0:
                 profile_name = arg_list[i]
@@ -196,15 +191,15 @@ def create(input_list):
             elif i == 2:
                 password = arg_list[i]
         skill_map = default_skill_map();
-        new_profile = profile.Profile(profile_name, username, password,skill_map, 3) 
-        new_profile_file(new_profile) 
+        new_profile = profile.Profile(profile_name, username, password,skill_map, 3)
+        if not new_profile_file(new_profile):
+            print('Error: File already exists. Try deleting the old profile before creating it again.')
+            return False
         return True
-
 
 # FIXME - Takes a single argument of profile_name and assigns that as the default profile to be loaded in
 def default(input_list):
     return False
-
 
 # FIXME - This should check if the deleted profile is the default one, and then reset the default profile if so
 # FIXME - This should check if they entered a file name (ends in .txt) and if so it should let them use it (as long as its valid)
@@ -227,7 +222,6 @@ def delete(input_list):
     else:
         print('Error: Profile \'' + file_name + '\' not found.')
         return False
-
 
 # FIXME - Many commands remain without explanations, fill them in or delelte them as development progresses
 def help_command(input_list):
@@ -276,7 +270,6 @@ def help_command(input_list):
     else:
         print('Help doesn\'t recognize this command. Try typing \'HELP\' to see a list of valid commands.')
 
-
 # Load the profile with the passed in name, returns a boolean and if successful a Profile as well
 def load(input_list):
     arg_list = parse_args(input_list)
@@ -295,33 +288,56 @@ def load(input_list):
     print("Error: Profile failed to read. Try using DELETE and CREATE commands to regenerate the profile.")
     return False, None
 
-
 def login(input_list):
     # Want to log in the user with command line arguments, then wait for more input from the user
     # login(user, pass) and maybe an optional third parameter for world number
     return False
-
 
 # FIXME - Initialize priorities to values that follow a hardcoded "optimal" route based on testing/timing routes
 # FIXME - Looking back at this, I'm not sure what it should do, this might just be consolidated into AUTO later
 def optimize():
     return False
 
-
-# FIXME - If no argument is passed to PRINT, it will use the current profile if one is loaded
-def print_command(input_list):
-    # If no argument is passed to PRINT, it will use the active profile if one is loaded, else it will fail
+# Note: If no argument is passed to PRINT, it will use the current profile if one is loaded
+# Note: This command accepts both profile names and profile file names (ending in .txt)
+def print_command(input_list, profile):
+    arg_list = parse_args(input_list)
+    if len(arg_list) < 1:  # If no arg passed to PRINT, it uses the active profile
+        file_name = profile.get_name() + '.txt'
+        dir_path = './profiles/'
+        if file_exists(file_name, dir_path):
+            file_path = dir_path + file_name
+            with open(file_path) as f:
+                line = f.read().splitlines()
+                for i in range(0, len(line)):
+                    print(line[i])
+            return True
+        else:
+            print('Error: Active profile failed to load. Try reloading it and then printing again.')
+    else:
+        if arg_list[0].endswith('.txt'):  # Check whether a profile or file name was passed
+            file_name = arg_list[0]
+        else:
+            file_name = arg_list[0] + '.txt'
+        dir_path = './profiles/'
+        if file_exists(file_name, dir_path):
+            file_path = dir_path + file_name
+            with open(file_path) as f:
+                line = f.read().splitlines()
+                for i in range(0, len(line)):
+                    print(line[i])
+            return True
+        else:
+            print('Error: Profile not found. Check that file exists and it\'s spelled correctly.')
     return False
-
 
 # This sets the priority of various skills to
 def priority(input_list):
-    # FIXME - Have this take a list of <skill prio, skill prio, skill prio> and optionally a character name
+    # FIXME - Have this take a list of <skill, prio, skill, prio, skill, prio...> and optionally a character name?
     # This will open the file for the proper profile, then find the skilsl that match its args and assign the new priority
     return False
     # This should take a series of flags as inputs, such as character name
     file_open("skill_priorities.txt")  # FIXME - On hold until profiles are done
-
 
 # FIXME - Want to be able to pause all operations and allow user to manually control their computer
 def stop():
