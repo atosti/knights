@@ -18,6 +18,7 @@ input_list = user_input
 while input_list[0] != "QUIT":
     user_input = input('Commands: ')
     input_list = user_input.split(" ")
+    # FIXME - Consider changing input_list[0] into a variable, would it prevent needless re-fetching?
     input_list[0] = input_list[0].upper()  # Uppercase the command for easy recognition
     if input_list[0] == 'AUTO':
         handler.auto()
@@ -25,18 +26,20 @@ while input_list[0] != "QUIT":
         handler.create(input_list)
     elif input_list[0] == 'DELETE':
         handler.delete(input_list)
-    elif input_list[0] == 'SETDEFAULT':
-        handler.setdefault(input_list)
     elif input_list[0] == 'HELP':
         handler.help_command(input_list)
     elif input_list[0] == 'LOAD':
-        result = handler.load(input_list, active_profile)
+        result = handler.load(input_list)
     elif input_list[0] == 'LOGIN':
         handler.login(input_list)
     elif input_list[0] == 'PRINT':
         handler.print_command(input_list, active_profile)
     elif input_list[0] == 'PRIORITY':
         handler.priority(input_list)
+    elif input_list[0] == 'RANDOMIZE':
+        handler.randomize(input_list, active_profile)
+    elif input_list[0] == 'SETDEFAULT':
+        handler.setdefault(input_list)
     elif input_list[0] == 'STOP':
         handler.stop()
     elif input_list[0] != 'QUIT':  # This is the final check, keep it at the end

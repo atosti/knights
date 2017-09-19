@@ -5,9 +5,15 @@ import skill
 import os  # Used to check if a file is empty
 import random  # Used for random number generation
 import fileinput  # Used for overwriting single lines in files
+from fnmatch import fnmatch, fnmatchcase  # Used for wildcard searches in strings
 # Note: DEFAULT_PROFILE in the initialization.txt takes a file name, so it must be of the form 'my_profile.txt'
 
 # -----Helper Functions-----
+# Creates and returns a default Profile object
+def default_profile():
+    skill_map = default_skill_map()
+    return profile.Profile('default', '', '', skill_map, '3')
+
 # Checks if a file exists, must be passed the full file name
 # FIXME - It now checks that it begins AND ends with the name, this should be even safer but I haven't tested it much.
 # FIXME     if it needs to be reverted, only check that it starts with the file_name.
@@ -58,10 +64,11 @@ def initialization(file_name, dir_path):
     total_result = (result_0, result_1)  # [Error boolean, active profile]
     return total_result
 
-# Creates and returns a default Profile object
-def default_profile():
-    skill_map = default_skill_map()
-    return profile.Profile('default', '', '', skill_map, '3')
+# Determines whether a passed in string ends in .txt or not
+def is_txt_file(name):
+    if name.endswith('.txt'):
+        return True
+    return False
 
 # FIXME - This needs a better name, but I don't know what to call it
 # Creates a new profile file
@@ -201,14 +208,14 @@ def create(input_list):
             return False
         return True
 
-# FIXME - This should check if the deleted profile is the default one, and then reset the default profile if so
-# FIXME - This should check if they entered a file name (end in .txt) and if so it should let them use it (as long as its valid)
+# FIXME - Check if the deleted profile is the default, if so reset the default profile in initialization.txt
+# FIXME - Allow file names (ending in .txt) to be passed to it
+# FIXME - The check for y/n from the user should be put into a helper function and then called
 def delete(input_list):
     arg_list = parse_args(input_list)
     file_name = arg_list[0] + '.txt'
     if file_exists(file_name, './profiles/'):
-        y_or_n = False
-        while not y_or_n:
+        while True:
             user_input = input(
                 'This action cannot be undone, do you want to delete \'' + file_name + '\'(y/n)? ').upper()
             if user_input == 'Y':
@@ -217,25 +224,23 @@ def delete(input_list):
                 return True
             elif user_input == 'N':
                 return False
-            if user_input == 'Y' or user_input == 'N':
-                y_or_n = True
-    else:
-        print('Error: Profile \'' + file_name + '\' not found.')
-        return False
+    print('Error: Profile \'' + file_name + '\' not found.')
+    return False
 
-# FIXME - Many commands remain without explanations, fill them in or delelte them as development progresses
+# FIXME - Many commands remain without explanations, fill them in or delete them as development progresses
 def help_command(input_list):
     arg_list = parse_args(input_list)
+    arg_list[0] = arg_list[0].upper()  # Uppercase the command for easy recognition
     if len(arg_list) < 1:  # If no arguments, then print general help
         print('AUTO\t\tAllows the system to automatically create objectives and work to complete them\n'
               'CREATE\t\tTakes two arguments (profile_name, username) to create a profile with that character\'s data\n'
-              'DEFAULT\t\tTakes one argument (profile_name) to set a profile as the default one loaded on launch\n'
               'DELETE\t\tTakes one argument (profile_name) and deletes the profile from the system'
               'HELP\t\tProvides a list of commands and how to use them\n'
               'LOAD\t\tTakes one argument (profile_name) and loads that profile\n'
-              'LOGIN\t\tTakes two arguments (username, password) and logs in the user\n'  # FIXME - Take an optional parameter for world number
+              'LOGIN\t\tTakes two arguments (username, password) and logs in the user\n'
               'PRINT\t\tTakes one argument (profile_name) and prints its contents.\n'
               'PRIORITY\tTakes a list of skills and priorities\n'
+              'SETDEFAULT\t\tTakes one argument (profile_name) to set a profile as the default one loaded on launch\n'
               'STOP\t\tHalts all automation and allows the user full control of the bots\n'
               'QUIT\t\tExits this program')
     elif arg_list[0] == 'AUTO':
@@ -246,8 +251,6 @@ def help_command(input_list):
               'populates the profile with data from the corresponding RS character\'s skills.\n' +
               '\tCREATE <PROFILENAME> <USERNAME> - Creates a profile associated with the username\n' +
               '\tCREATE <PROFILENAME> <USERNAME> <PASSWORD> - Same as above but also stores a password in the profile')
-    elif arg_list[0] == 'DEFAULT':
-        print('DEFAULT...')
     elif arg_list[0] == 'DELETE':
         print('DELETE...')
     elif arg_list[0] == 'HELP':
@@ -260,9 +263,16 @@ def help_command(input_list):
     elif arg_list[0] == 'LOGIN':
         print('LOGIN...')
     elif arg_list[0] == 'PRINT':
-        print('PRINT...')
+        print('Takes one optional argument for the profile name. If no argument is passed to it, then it loads the ' +
+              'active profile.\nBoth profile names and file names(with extensions) are valid.\n'
+              '\tPRINT - Prints the currently loaded profile\n' +
+              '\tPRINT <PROFILENAME> - Prints the profile with the passed in name if it exists')
     elif arg_list[0] == 'PRIORITY':
         print('PRIORITY...')
+    elif arg_list[0] == 'SETDEFAULT':
+        print('Takes one argument of profile name to be set as the new default profile loaded on launch.\n' +
+              'Both profile names and file names(with extensions) are valid.\n' +
+              '\tSETDEFAULT <PROFILENAME> - Sets the default profile to be the new profile loaded at launch\n')
     elif arg_list[0] == 'STOP':
         print('STOP...')
     elif arg_list[0] == 'QUIT':
@@ -273,21 +283,22 @@ def help_command(input_list):
 # Load the profile with the passed in name, returns a boolean and if successful a Profile as well
 def load(input_list):
     arg_list = parse_args(input_list)
-    if len(arg_list) <= 0:
-        print("No profile name entered. Type \"LOAD <profile_name>\" to run this command.")
+    if len(arg_list) < 1:
+        print('No profile name entered.')
         return False, None
-    else:
-        # FIXME - Add a condition that if it includes the '.txt' already, then to just take the whole arg as the path
-        file_name = arg_list[0] + '.txt'
-        file_path = './profiles/' + file_name
-        if file_exists(file_name, './profiles/'):
-            result = map_read_profile(file_path)
-            if result[0]:
-                loaded_profile = result[1]
-                return True, loaded_profile
-    print("Error: Profile failed to read. Try using DELETE and CREATE commands to regenerate the profile.")
+    file_name = arg_list[0]
+    if not is_txt_file(arg_list[0]):
+        file_name += '.txt'  # Ensure it ends with a txt file extension
+    file_path = './profiles/' + file_name
+    if file_exists(file_name, './profiles/'):
+        result = map_read_profile(file_path)
+        if result[0]:
+            loaded_profile = result[1]
+            return True, loaded_profile
+    print('Error: Profile failed to read.')
     return False, None
 
+# FIXME - Take an optional parameter for world number
 def login(input_list):
     # Want to log in the user with command line arguments, then wait for more input from the user
     # login(user, pass) and maybe an optional third parameter for world number
@@ -334,11 +345,50 @@ def print_command(input_list, profile):
 # This sets the priority of various skills to
 def priority(input_list):
     # FIXME - Have this take a list of <skill, prio, skill, prio, skill, prio...> and optionally a character name?
-    # This will open the file for the proper profile, then find the skills that match its args and assign the new priority
+    # This will open the file for the profile, then find the skills that match its args and assign the new priority
     return False
     # This should take a series of flags as inputs, such as character name
 
+# FIXME - Takes a parameter of profile name to have its priorities randomized. No args means it uses active profile
+# FIXME - Since this could undo a lot of a user's work, it should ask for confirmation (y/n)
+def randomize(input_list, profile):
+    arg_list = parse_args(input_list)
+    active_profile = profile  # Init with the active profile
+    if len(arg_list) > 1:
+        # FIXME - Load doesn't work quite this way, it needs to be fixed first
+        result = load(input_list)
+        if result[0]:  # On a successful load
+            active_profile = result[1]
+        else:
+            print('Error: Failed to load passed in profile.')
+    file_name = active_profile.get_name() + '.txt'
+    selected_y = False
+    while not selected_y:
+        user_input = input(
+            'This action cannot be undone, do you want to randomize the priorities of \'' + file_name +
+            '(y/n)? ').upper()  # Uppercase for easy recognition
+        if user_input == 'Y':
+            selected_y = True
+        elif user_input == 'N':
+            return False
+    # Now perform the randomization
+    file_path = './profiles/' + file_name
+    #for line in fileinput.input(file_path, inplace=True):
+    for line in fileinput.input('./profiles/alpha.txt', inplace=True):  # FIXME - For testing this was hardcoded
+        if fnmatch(line, '*PRIO=*'):  # Check if the line relates to priority
+            item = line.split('=')
+            index = 0
+            if len(item) > 1:  # Count the number of characters to remove from the end of the line
+                for i in range(0, len(item)):
+                    --index
+            # FIXME - This ALMOST works, but it doesn't overwrite the numbers, instead it prints the new ones on the
+            # FIXME     next line. It also deletes all other lines except PRIOs
+            print(line.replace(line, line[index:] + str(random_priority())), end='')
+
+    return False
+
 # FIXME - Put checking if a file ends in '.txt' in its own function and call it here as well as where it was used prior
+# FIXME     in other functions.
 # Note: Takes a single argument of profile_name and sets that profile as the default
 # Note: Accepts both profile names and profile file names
 def setdefault(input_list):
