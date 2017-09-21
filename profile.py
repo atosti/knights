@@ -28,8 +28,8 @@ class Profile:
     def get_password(self):
         return self.password
 
-    def get_skill_list(self):
-        return self.skill_list
+    def get_skill_dict(self):
+        return self.skill_dict
         
     def get_skill(self, skill_name):
-        return skill_dict[skill_name]
+        return self.skill_dict[skill_name]

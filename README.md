@@ -19,6 +19,11 @@ Currently the docs are simply a series of good practices and oddities related to
     * It is valid to have multiple profiles for a single character. This allows users to load different priorities of their choosing
 6. When adding or removing a COMMAND be sure to also add or remove it from the HELP command
     * Add both a short general explanation and a more detailed one for if HELP <COMMAND_NAME> is called
+7. DEFAULT_PROFILE in initialization.txt takes file names and not profile names. As such, they must have a file extension
+8. Currently, the only accepted profile file types are .txt files
+9. For many commands that use profiles, if no argument is passed it will use the active profile by default.
+10. Commands that make large changes to files should always prompt the user (y/n) before executing.
+    * This is especially relevant for operations that are impossible to undo
 
 ## Features to be Implemented and Bugs to Fix
 1. The HELP command should be clear about the order of arguments mattering and that excess arguments are ignored
