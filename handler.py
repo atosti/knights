@@ -28,7 +28,7 @@ def default_skill_map():
 # Checks if a file exists, must be passed the full file name
 def file_exists(file_name, dir_path):
     for file in os.listdir(dir_path):
-        if file.startswith(file_name) and file.endswith(file_name):  # FIXME - More optimal way to do this?
+        if(file == file_name):
             return True
     return False
 
@@ -38,10 +38,10 @@ def file_is_empty(file_path):
 
 # Converts a string to have a .txt extension (for use with profile name that may or may not have extensions)
 def make_txt_file_name(profile_name):
-    file_name = profile_name
-    if not is_txt_file(file_name):
-        file_name += '.txt'
-    return file_name
+    if profile_name.endswith('.txt'):
+        return profile_name
+    else:
+        return profile_name + '.txt'
 
 # Perform initial setup as dictated by the init file
 # FIXME - How to make it so the exact init lines that failed can be returned to main for error-checking?
@@ -103,11 +103,7 @@ def is_default_profile(profile_name):
             return True
     return False
 
-# Returns a boolean of whether a .txt file name was passed to it
-def is_txt_file(name):
-    if name.endswith('.txt'):
-        return True
-    return False
+
 
 # Reads the content from a profile file and returns a Profile object
 def map_read_profile(file_path):
