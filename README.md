@@ -33,7 +33,7 @@ This documentation is currently a list of design practices and unique functional
     * This is especially relevant for operations that are impossible to undo.
 
 ## Features to be Implemented
-See issues labed [enhancement](https://github.com/atosti/knights/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement).
+See issues labeled [enhancement](https://github.com/atosti/knights/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement).
 
 ## Bugs
 Most of these are well-documented via FIXMEs in the source, which willl always be more up-to-date than this file. As such, unless a bug becomes large or affects a significant portion of functionality, it will not be listed here. 
