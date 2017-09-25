@@ -33,13 +33,7 @@ This documentation is currently a list of design practices and unique functional
     * This is especially relevant for operations that are impossible to undo.
 
 ## Features to be Implemented
-1. Helper functions need to be implemented to read images from the screen and determine the player's location.
-2. Implement functionality for member's skills to be included in profiles.
-3. Create functions to resize the RS window, so that all screenshots are uniformly sized.
-4. Functions to move the player based on their minimap need to be developed.
-5. Automatically prompt the user (y/n) if they want to create a new profile when the profile they tried to load doesn't exist
-6. Implement changing a profile's name
-   * Check that the new name doesn't already exist and also update initialization.txt if it's referenced as the DEFAULT_PROFILE
+See issues labeled [enhancement](https://github.com/atosti/knights/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement).
 
 ## Bugs
 Most of these are well-documented via FIXMEs in the source, which willl always be more up-to-date than this file. As such, unless a bug becomes large or affects a significant portion of functionality, it will not be listed here. 
