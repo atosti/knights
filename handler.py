@@ -44,48 +44,29 @@ def make_txt_file_name(profile_name):
         return profile_name + '.txt'
 
 # Perform initial setup as dictated by the init file
+# Returns tuple, [Success boolean, active profile].
 # FIXME - How to make it so the exact init lines that failed can be returned to main for error-checking?
 # FIXME - If no intialization.txt file is found, it should be generated with default info.
+# FIXME - Refactor to return dict, {'Success': success, 'Value': value}
 def initialization(file_name, dir_path):
-    result_0 = False
-    result_1 = None
-    total_result = (result_0, result_1)  # Must contain an element for each object to be returned
     if not file_exists(file_name, dir_path):  # If no init file exists, return false and default profile
-        result_1 = default_profile()
-        total_result = (result_0, result_1)
-        return total_result
+        return (False, default_profile())
     file_path = dir_path + file_name
     with open(file_path) as f:  # Open the init file
         lines = f.read().splitlines()
-        success = []  # A list of whether a each line succeeded
-        for i in range(0, len(lines)):
-            item = lines[i].split('=')
+        for line in lines:
+            item = line.split('=')
             if item[0] == 'DEFAULT_PROFILE':  # Set a default profile as the active one
-                if len(item) < 2:  # Check there's a value to the right of the equals sign
-                    result_1 = default_profile()
-                    success.append(False)
-                elif item[1] == '':  # If no default file set
-                    result_1 = default_profile()
-                    success.append(False)
-                elif file_exists(item[1], './profiles/'):
-                    path = './profiles/' + item[1]
-                    result = map_read_profile(path)
-                    if result[0]:  # If the profile read succeeds
-                        result_1 = result[1]
-                        success.append(True)
-                    else:
-                        result_1 = default_profile()
-                        success.append(False)
+                if(len(line) < 2 or item[1] == ''):
+                    return (False, default_profile())
+                path = './profiles/' + item[1]
+                (load_success, loaded_profile) = map_read_profile(path)
+                if load_success:
+                    return (True, loaded_profile)
                 else:
-                    result_1 = default_profile()
-                    success.append(False)
-        result_0 = True  # Initialize to True, then check validity of each success item
-        for i in range(0, len(success)):  # Determine whether to return True or False
-            if not success[i]:
-                result_0 = False
-                i = len(lines)  # Exit loop on first False found
-    total_result = (result_0, result_1)  # [Success boolean, active profile]
-    return total_result
+                    return (True, default_profile())
+    return (False, default_profile())                
+   
 
 # Returns whether the profile is set as the default in initialization.txt
 def is_default_profile(profile_name):
