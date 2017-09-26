@@ -28,7 +28,7 @@ def default_skill_map():
 # Checks if a file exists, must be passed the full file name
 def file_exists(file_name, dir_path):
     for file in os.listdir(dir_path):
-        if(file == file_name):
+        if file == file_name:
             return True
     return False
 
@@ -36,12 +36,26 @@ def file_exists(file_name, dir_path):
 def file_is_empty(file_path):
     return os.stat(file_path).st_size == 0
 
-# Converts a string to have a .txt extension (for use with profile name that may or may not have extensions)
-def make_txt_file_name(profile_name):
-    if profile_name.endswith('.txt'):
-        return profile_name
-    else:
-        return profile_name + '.txt'
+def file_rename(file_name, name):
+    file_path = './profiles/' + make_txt_file_name(file_name)
+    new_name = './profiles/' + make_txt_file_name(name)
+    os.rename(file_path, new_name)
+    return False
+
+# Writes to a file at all lines matching the line_name
+def file_write(file_name, line_name, value):
+    file_path = './profiles/' + file_name
+    for line in fileinput.input(file_path, inplace=True):
+        if fnmatch(line, line_name + '*'):
+            item = line.split('=')
+            index = 0
+            if len(item) > 1:  # Count the number of characters to remove from the line
+                for i in range(0, len(item[1])):
+                    index -= 1
+            print(line.replace(line.rstrip(), line[:index] + value), end='')
+        else:
+            print(line, end='')
+    return False
 
 # Perform initial setup as dictated by the init file
 # Returns tuple, [Success boolean, active profile].
@@ -66,7 +80,6 @@ def initialization(file_name, dir_path):
                 else:
                     return (True, default_profile())
     return (False, default_profile())                
-   
 
 # Returns whether the profile is set as the default in initialization.txt
 def is_default_profile(profile_name):
@@ -84,7 +97,23 @@ def is_default_profile(profile_name):
             return True
     return False
 
+def load(profile_name):
+    file_name = make_txt_file_name(profile_name)  # Ensure this handles file names
+    file_path = './profiles/' + file_name
+    if file_exists(file_name, './profiles/'):
+        result = map_read_profile(file_path)
+        if result[0]:
+            loaded_profile = result[1]
+            return True, loaded_profile
+    print('Error: Failed to load profile \'' + file_name + '\'.')
+    return False, None
 
+# Converts a string to have a .txt extension (for use with profile name that may or may not have extensions)
+def make_txt_file_name(profile_name):
+    if profile_name.endswith('.txt'):
+        return profile_name
+    else:
+        return profile_name + '.txt'
 
 # Reads the content from a profile file and returns a Profile object
 def map_read_profile(file_path):
@@ -211,9 +240,7 @@ def create(input_list):
             return False
         return True
 
-# FIXME - On further thinking, is it really necessary to reset the default profile to default.txt?
-# FIXME     It's implemented now, but it might be unnecessary and could be taken out. It depends on how error
-# FIXME     checking really works for initialization.txt
+# FIXME - Is it necessary to reset the default_profile to default.txt after deletion?
 # Deletes a profile file based on a passed in profile name
 def delete(input_list):
     arg_list = parse_args(input_list)
@@ -298,17 +325,6 @@ def help_command(input_list):
               '\tQUIT - Stops all execution of the program and exits')
     else:
         print('Help doesn\'t recognize this command. Try typing \'HELP\' to see a list of valid commands.')
-
-def load(profile_name):
-    file_name = make_txt_file_name(profile_name)  # Ensure this handles file names
-    file_path = './profiles/' + file_name
-    if file_exists(file_name, './profiles/'):
-        result = map_read_profile(file_path)
-        if result[0]:
-            loaded_profile = result[1]
-            return True, loaded_profile
-    print('Error: Failed to load profile \'' + file_name + '\'.')
-    return False, None
 
 # Load the profile with the passed in name, returns a Tuple of (Boolean, Profile)
 def load_command(input_list):
@@ -489,18 +505,22 @@ def setdefault(input_list):
         print('Error: Profile not found.')
     return False
 
-# FIXME - This is very broken, it calls load(input_list) in an incorrect manner. Restructure load(), then fix this.
-# FIXME - Also, this doesn't seem like its even setup correctly, it should take a profile name, then the new username
-# FIXME     Basically, this is unfinished, don't use it yet.
 # Used to set various fields in profiles
-def setusername(input_list):
+def setusername(input_list, active_profile):
     arg_list = parse_args(input_list)
     if len(arg_list) < 1:
         print('Error: No username parameter specified.')
-        return False
-    active_profile = load(arg_list[0])
+        return False, None
+    result = load(active_profile.get_name())
+    if not result[0]:
+        # FIXME - This should pass the error from load() to main.py
+        return False, None
     active_profile.set_username(arg_list[0])
-    return True
+    file_name = make_txt_file_name(active_profile.get_name())
+    file_write(file_name, 'USERNAME=', arg_list[0])
+    # FIXME - Check if this name is used in initialization.txt - reseting initialization.txt should be a helper
+
+    return True, active_profile
 
 # Takes no parameters. It starts the bot, creating a path between hotspots based on the active profile's settings
 # It should mainly consider priority, proximity, and whether some skills are set as 'active' (to be implemented)

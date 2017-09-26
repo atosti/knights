@@ -1,10 +1,5 @@
 import handler
 import image
-import requests  # FIXME - mainly just for testing, only called in helpers
-                    # pip install requests
-from lxml import html  # FIXME - also just for testing html API stuff
-                        # pip install lxml
-
 
 # Note: Profile names must be the same as their file name in order for many commands to function properly
 # Note: Many of the command functions print errors, these should be properly captured by exception handling
@@ -74,7 +69,9 @@ while input_list[0] != "QUIT":
     elif input_list[0] == 'SETDEFAULT':
         handler.setdefault(input_list)
     elif input_list[0] == 'SETUSERNAME':
-        handler.setusername(input_list)
+        results = handler.setusername(input_list, active_profile)
+        if result[0]:
+            active_profile = result[1]
     elif input_list[0] == 'STOP':
         handler.stop()
     elif input_list[0] != 'QUIT':  # This is the final check, keep it at the end
