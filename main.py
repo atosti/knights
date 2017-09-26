@@ -35,9 +35,10 @@ from lxml import html  # FIXME - also just for testing html API stuff
 # Run initialization
 # FIXME - On init, the default profile should have its skills re-fetched to ensure that the values are up-to-date
 result = handler.initialization('initialization.txt', './')
-if not result[0]:
-    print('Error: An initialization parameter failed to load. Check \'initialization.txt\' is correctly formatted.')
-active_profile =result[1]
+if not result['success']:
+    print('Error, '+ result['error'])
+    #print('Error: An initialization parameter failed to load. Check \'initialization.txt\' is correctly formatted.')
+active_profile = result['profile']
 
 # User input loop
 user_input = 'NONE'

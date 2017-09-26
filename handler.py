@@ -47,10 +47,13 @@ def make_txt_file_name(profile_name):
 # Returns tuple, [Success boolean, active profile].
 # FIXME - How to make it so the exact init lines that failed can be returned to main for error-checking?
 # FIXME - If no intialization.txt file is found, it should be generated with default info.
-# FIXME - Refactor to return dict, {'Success': success, 'Value': value}
 def initialization(file_name, dir_path):
     if not file_exists(file_name, dir_path):  # If no init file exists, return false and default profile
-        return (False, default_profile())
+        return {
+            'success' : False, 
+            'profile': default_profile(), 
+            'error' : 'Specified initialization file: ' + file_name + 
+            ' does not exist at the given directory: ' + dir_path +'.' }
     file_path = dir_path + file_name
     with open(file_path) as f:  # Open the init file
         lines = f.read().splitlines()
@@ -58,14 +61,36 @@ def initialization(file_name, dir_path):
             item = line.split('=')
             if item[0] == 'DEFAULT_PROFILE':  # Set a default profile as the active one
                 if(len(line) < 2 or item[1] == ''):
-                    return (False, default_profile())
-                path = './profiles/' + item[1]
+                    return {
+                        'success' : False, 
+                        'profile': default_profile(), 
+                        'error' : 'No profile specified in initialization file: ' + file_name }
+               
+                profile_path_base = './profiles/'
+                if not file_exists(item[1], profile_path_base):
+                    return {
+                        'success' : False, 
+                        'profile': default_profile(), 
+                        'error' : 'Specified default file: ' + item[1] + 
+                        ' does not exist at given location: ' + profile_path_base}
+                
+                path = profile_path_base + item[1]
+                
                 (load_success, loaded_profile) = map_read_profile(path)
                 if load_success:
-                    return (True, loaded_profile)
+                    return {
+                        'success' : True, 
+                        'profile': loaded_profile, 
+                        'error' : '' }
                 else:
-                    return (True, default_profile())
-    return (False, default_profile())                
+                    return {
+                        'success' : True, 
+                        'profile': default_profile(), 
+                        'error' : '' }
+    return {
+        'success' : False, 
+        'profile': default_profile(), 
+        'error' : 'Unable to load profile: ' + file_name+ ' at '+ dir_path }            
    
 
 # Returns whether the profile is set as the default in initialization.txt
@@ -93,7 +118,7 @@ def map_read_profile(file_path):
     profile_name = ''
     password = ''
     skill_name = ''  # FIXME - Is this needed, should it be incorporated below?
-    combat_level = ''
+    combat_level = ''        
     with open(file_path) as f:
         lines = f.read().splitlines()
         for line in lines:
