@@ -31,7 +31,7 @@ import image
 # FIXME - On init, the default profile should have its skills re-fetched to ensure that the values are up-to-date
 result = handler.initialization('initialization.txt', './')
 if not result['success']:
-    print('Error, '+ result['error'])
+    print('Error: '+ result['error'])
     #print('Error: An initialization parameter failed to load. Check \'initialization.txt\' is correctly formatted.')
 active_profile = result['profile']
 
@@ -71,8 +71,10 @@ while input_list[0] != "QUIT":
         handler.setdefault(input_list)
     elif input_list[0] == 'SETUSERNAME':
         results = handler.setusername(input_list, active_profile)
-        if result[0]:
-            active_profile = result[1]
+        if results['success']:
+            active_profile = results['profile']
+        else :
+            print('Error: '+ results['error'])
     elif input_list[0] == 'STOP':
         handler.stop()
     elif input_list[0] != 'QUIT':  # This is the final check, keep it at the end

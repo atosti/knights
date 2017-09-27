@@ -58,7 +58,7 @@ def file_write(file_name, line_name, value):
     return False
 
 # Perform initial setup as dictated by the init file
-# Returns tuple, [Success boolean, active profile].
+# Returns dict with keys 'success', 'profile', 'error'
 # FIXME - How to make it so the exact init lines that failed can be returned to main for error-checking?
 # FIXME - If no intialization.txt file is found, it should be generated with default info.
 def initialization(file_name, dir_path):
@@ -66,8 +66,8 @@ def initialization(file_name, dir_path):
         return {
             'success' : False, 
             'profile': default_profile(), 
-            'error' : 'Specified initialization file: ' + file_name + 
-            ' does not exist at the given directory: ' + dir_path +'.' }
+            'error' : 'Specified initialization file, ' + file_name + ','
+            ' does not exist at the given directory, ' + dir_path + '.' }
     file_path = dir_path + file_name
     with open(file_path) as f:  # Open the init file
         lines = f.read().splitlines()
@@ -78,15 +78,15 @@ def initialization(file_name, dir_path):
                     return {
                         'success' : False, 
                         'profile': default_profile(), 
-                        'error' : 'No profile specified in initialization file: ' + file_name }
+                        'error' : 'No profile specified in initialization file, ' + file_name + '.' }
                
                 profile_path_base = './profiles/'
                 if not file_exists(item[1], profile_path_base):
                     return {
                         'success' : False, 
                         'profile': default_profile(), 
-                        'error' : 'Specified default file: ' + item[1] + 
-                        ' does not exist at given location: ' + profile_path_base}
+                        'error' : 'Specified default file, ' + item[1] + ','
+                        ' does not exist at given location, ' + profile_path_base}
                 
                 path = profile_path_base + item[1]
                 
@@ -104,7 +104,7 @@ def initialization(file_name, dir_path):
     return {
         'success' : False, 
         'profile': default_profile(), 
-        'error' : 'Unable to load profile: ' + file_name+ ' at '+ dir_path }            
+        'error' : 'Unable to load profile ' + file_name+ ' at '+ dir_path }            
 
 # Returns whether the profile is set as the default in initialization.txt
 def is_default_profile(profile_name):
@@ -531,21 +531,29 @@ def setdefault(input_list):
     return False
 
 # Used to set various fields in profiles
+# Returns dict with keys 'success', 'profile', 'error'
 def setusername(input_list, active_profile):
     arg_list = parse_args(input_list)
     if len(arg_list) < 1:
-        print('Error: No username parameter specified.')
-        return False, None
+        return {
+            'success' : False, 
+            'profile': None, 
+            'error' : 'No username parameter specified.' }
     result = load(active_profile.get_name())
     if not result[0]:
         # FIXME - This should pass the error from load() to main.py
-        return False, None
+        return {
+            'success' : False, 
+            'profile': None, 
+            'error' : 'Failed to load active profile.' }
     active_profile.set_username(arg_list[0])
     file_name = make_txt_file_name(active_profile.get_name())
     file_write(file_name, 'USERNAME=', arg_list[0])
     # FIXME - Check if this name is used in initialization.txt - reseting initialization.txt should be a helper
-
-    return True, active_profile
+    return {
+        'success' : True, 
+        'profile': active_profile, 
+        'error' : '' }
 
 # Takes no parameters. It starts the bot, creating a path between hotspots based on the active profile's settings
 # It should mainly consider priority, proximity, and whether some skills are set as 'active' (to be implemented)
