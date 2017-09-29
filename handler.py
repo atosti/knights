@@ -42,10 +42,10 @@ def file_rename(file_name, name):
     os.rename(file_path, new_name)
     return False
 
+# FIXME - Catch IO Errors and return them
 # Writes to a file at all lines matching the line_name
-def file_write(file_name, line_name, value):
-    file_path = './profiles/' + file_name
-    for line in fileinput.input(file_path, inplace=True):
+def file_write(full_file_path, line_name, value):
+    for line in fileinput.input(full_file_path, inplace=True):
         if fnmatch(line, line_name + '*'):
             item = line.split('=')
             index = 0
@@ -62,24 +62,27 @@ def file_write(file_name, line_name, value):
 # FIXME - How to make it so the exact init lines that failed can be returned to main for error-checking?
 # FIXME - If no intialization.txt file is found, it should be generated with default info.
 # FIXME - Refactor to return dict, {'Success': success, 'Value': value}
+# FIXME - On init, the DEFAULT_PROFILE should have its skills re-fetched to ensure that the values are up-to-date
 def initialization(file_name, dir_path):
     if not file_exists(file_name, dir_path):  # If no init file exists, return false and default profile
-        return (False, default_profile())
+        return False, default_profile()
     file_path = dir_path + file_name
     with open(file_path) as f:  # Open the init file
         lines = f.read().splitlines()
         for line in lines:
             item = line.split('=')
             if item[0] == 'DEFAULT_PROFILE':  # Set a default profile as the active one
-                if(len(line) < 2 or item[1] == ''):
-                    return (False, default_profile())
+                if len(line) < 2 or item[1] == '':
+                    return False, default_profile()
+                if not file_exists(item[1], './profiles/'):  # Handles non-existant files
+                    return False, default_profile()
                 path = './profiles/' + item[1]
                 (load_success, loaded_profile) = map_read_profile(path)
                 if load_success:
-                    return (True, loaded_profile)
+                    return True, loaded_profile
                 else:
-                    return (True, default_profile())
-    return (False, default_profile())                
+                    return True, default_profile()
+    return False, default_profile()               
 
 # Returns whether the profile is set as the default in initialization.txt
 def is_default_profile(profile_name):
@@ -417,47 +420,15 @@ def randomize(input_list, profile):
             print(line, end='')
     return False
 
-# FIXME - Place this under helpers alphabetically
-# FIXME - How to do randomized values in a general 'all prios' function?
-# FIXME     Maybe make a sub function for updating an individual prio and have this call that?
-# FIXME - I really want to avoid having to loop through the file more than once to change all its priorities
-# FIXME     which would be very easy to do, because of how file writing has to occur. You can't just replace a single
-# FIXME     line, you have to copy the whole file to change a single line, so you want to lump changes together.
-# FIXME - This is incomplete, don't use it yet.
-# Takes two parameters, profile name to be changed, and value of the priorities to be reset to
-def update_all_priorities(profile_name, new_value):
-    file_name = make_txt_file_name(profile_name)
-    file_path = './profiles/' + file_name
-    for line in fileinput.input(file_path, inplace=True):  # Perform change
-        if fnmatch(line, '*PRIO=*'):  # Check if the line relates to priority
-            item = line.split('=')
-            index = 0
-            if len(item) > 1:  # Count the number of characters to remove from the end of the line
-                for i in range(0, len(item[1])):
-                    index -= 1
-            print(line.replace(line.rstrip(), line[:index] + '99'), end='')
-        else:
-            print(line, end='')
-    return False
-
 # FIXME - Consider putting replacing priorities into its own helper, this uses the functionality twice and randomize uses it once
 # Note: This takes a single (optional) argument of profile name (or file name) and resets the priorities all to 99.
-def resetpriority(input_list, active_profile):
+def resetprio(input_list, active_profile):
     arg_list = parse_args(input_list)
     if len(arg_list) < 1:  # Use the active profile
         file_name = make_txt_file_name(active_profile.get_name())
         if prompt_yn('reset', file_name):
             file_path = './profiles/' + file_name
-            for line in fileinput.input(file_path, inplace=True):  # Perform the reset
-                if fnmatch(line, '*PRIO=*'):  # Check if the line relates to priority
-                    item = line.split('=')
-                    index = 0
-                    if len(item) > 1:  # Count the number of characters to remove from the end of the line
-                        for i in range(0, len(item[1])):
-                            index -= 1
-                    print(line.replace(line.rstrip(), line[:index] + '99'), end='')
-                else:
-                    print(line, end='')
+            file_write(file_path, '*PRIO=*', '99')
             # FIXME - This needs to reload the current profile with the new load(), right now the active_profile is returned unchanged
             return True, active_profile
     else:  # Fetch the passed in profile (if it exists)
@@ -466,16 +437,7 @@ def resetpriority(input_list, active_profile):
             return False, None
         if prompt_yn('reset', file_name):
             file_path = './profiles/' + file_name
-            for line in fileinput.input(file_path, inplace=True):  # Perform the reset
-                if fnmatch(line, '*PRIO=*'):  # Check if the line relates to priority
-                    item = line.split('=')
-                    index = 0
-                    if len(item) > 1:  # Count the number of characters to remove from the end of the line
-                        for i in range(0, len(item[1])):
-                            index -= 1
-                    print(line.replace(line.rstrip(), line[:index] + '99'), end='')
-                else:
-                    print(line, end='')
+            file_write(file_path, '*PRIO=*', '99')
             # FIXME - This needs to reload the current profile with the new load(), right now the active_profile is returned unchanged
             return True, active_profile
         return False, None
@@ -505,7 +467,27 @@ def setdefault(input_list):
         print('Error: Profile not found.')
     return False
 
-# Used to set various fields in profiles
+# Used to set the name of a profile
+def setname(input_list, active_profile):
+    arg_list = parse_args(input_list)
+    if len(arg_list) < 1:
+        print('Error: No name parameter specified.')
+        return False, None
+    result = load(active_profile.get_name())
+    if not result[0]:
+        # FIXME - This should pass the error from load() to main.py
+        return False, None
+    old_file_name = make_txt_file_name(active_profile.get_name())
+    profile_path = './profiles/' + old_file_name
+    file_write(profile_path, 'NAME', arg_list[0])
+    file_rename(old_file_name, arg_list[0])
+    active_profile.set_name(arg_list[0])  # Update the profile name
+    new_file_name = make_txt_file_name(active_profile.get_name())
+    if is_default_profile(old_file_name):  # Check if this profile is set as the default
+        file_write('./initialization.txt', 'DEFAULT_PROFILE', new_file_name)
+    return True, active_profile
+
+# Used to set the username in a profile
 def setusername(input_list, active_profile):
     arg_list = parse_args(input_list)
     if len(arg_list) < 1:
@@ -517,9 +499,8 @@ def setusername(input_list, active_profile):
         return False, None
     active_profile.set_username(arg_list[0])
     file_name = make_txt_file_name(active_profile.get_name())
-    file_write(file_name, 'USERNAME=', arg_list[0])
-    # FIXME - Check if this name is used in initialization.txt - reseting initialization.txt should be a helper
-
+    full_file_path = './profiles/' + file_name
+    file_write(full_file_path, 'USERNAME=', arg_list[0])
     return True, active_profile
 
 # Takes no parameters. It starts the bot, creating a path between hotspots based on the active profile's settings

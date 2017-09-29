@@ -31,6 +31,7 @@ This documentation is currently a list of design practices and unique functional
 7. For commands that deal with profiles, if no argument is passed to them, they should use the active profile by default.
 8. Commands that make large changes to files should always prompt the user (y/n) before executing.
     * This is especially relevant for operations that are impossible to undo.
+9. Profile names must be the same as their file name in order for many commands to function properly
 
 ## Features to be Implemented
 See issues labeled [enhancement](https://github.com/atosti/knights/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement).
