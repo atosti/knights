@@ -29,9 +29,10 @@ import image
 
 # Run initialization
 result = handler.initialization('initialization.txt', './')
-if not result[0]:
-    print('Error: An initialization parameter failed to load. Check \'initialization.txt\' is correctly formatted.')
-active_profile =result[1]
+if not result['success']:
+    print('Error: '+ result['error'])
+    #print('Error: An initialization parameter failed to load. Check \'initialization.txt\' is correctly formatted.')
+active_profile = result['profile']
 
 # User input loop
 user_input = 'NONE'
@@ -72,8 +73,10 @@ while input_list[0] != "QUIT":
             active_profile = result[1]
     elif cmd == 'SETUSERNAME':
         results = handler.setusername(input_list, active_profile)
-        if result[0]:
-            active_profile = result[1]
+        if results['success']:
+            active_profile = results['profile']
+        else:
+            print('Error: ' + results['error'])
     elif cmd == 'STOP':
         handler.stop()
     elif cmd != 'QUIT':  # This is the final check, keep it at the end
