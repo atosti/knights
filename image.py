@@ -4,10 +4,15 @@ from PIL import Image, ImageGrab
 # More on ctypes via python: https://stackoverflow.com/questions/1997678/faster-method-of-reading-screen-pixel-in-python-than-pil
 # More on compress_level and the speed of PIL: https://github.com/python-pillow/Pillow/issues/1211
 
+# https://stackoverflow.com/questions/42189751/how-to-programmatically-resize-process-windows-in-windows-10
+
+# FIXME - Implement resizing other program windows (hopefully cross-platform) to get uniformly sized screenshots
+# FIXME - Implement quickly taking snapshots of the screen
+
 # Takes a screenshot, pretty sure it needs the '__name__' passed to it in order to properly function
 def screenshot(__name__):
     if __name__ == '__main__':
-        im = ImageGrab.grab()  # I think you can set a bbox to get a smaller image
+        im = ImageGrab.grab()  # I think you can set and pass a bbox to get a smaller image
         im.save('ss.png')
 
 

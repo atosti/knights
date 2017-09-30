@@ -10,7 +10,10 @@ Although many of these things will likely be reworked and revised in the future,
  * LOAD - Loads a profile as the active profile.
  * PRINT - Prints the contents of a profile to the console.
  * RANDOMIZE - Randomizes the priorities of a profile.
+ * RESETPRIO - Resets all the priorities to 99 for a profile.
  * SETDEFAULT - Sets the default profile loaded on launch.
+ * SETNAME - Changes the name of a profile.
+ * SETUSERNAME - Changes the username of a profile.
  * QUIT - Exits the program.
 
 ## Documentation
@@ -37,4 +40,4 @@ This documentation is currently a list of design practices and unique functional
 See issues labeled [enhancement](https://github.com/atosti/knights/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement).
 
 ## Bugs
-Most of these are well-documented via FIXMEs in the source, which willl always be more up-to-date than this file. As such, unless a bug becomes large or affects a significant portion of functionality, it will not be listed here. 
+Most of these are well-documented via FIXMEs in the source, which will always be more up-to-date than this file. As such, unless a bug becomes large or affects a significant portion of functionality, it will not be listed here.

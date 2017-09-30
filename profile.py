@@ -1,4 +1,3 @@
-import skill
 import requests
 class Profile:
 
@@ -42,8 +41,7 @@ class Profile:
             # 2: (something, skill_lvl, skill_exp)
             # Some of these have -1 as all the fields, I presume that's if they're unleveled
 
-    # FIXME - This update should check there are no other profiles with this name, or a helper could do this
-    # FIXME - If a helper does this, then ensure this is only ever called with valid parameters
+    # FIXME - When calling this update, you should check there are no other profiles with this name
     def set_name(self, name):
         self.name = name
 

@@ -23,15 +23,10 @@ import image
 #               - Later, we would want to add limits on time or exp in order to limit suspicion and to change what
 #                 the bot is doing more regularly, even though it wouldn't be the most optimal.
 
-
-# Successfully takes a screenshot, commented out for now but it works fine
-# image.screenshot(__name__)
-
 # Run initialization
 result = handler.initialization('initialization.txt', './')
 if not result['success']:
     print('Error: '+ result['error'])
-    #print('Error: An initialization parameter failed to load. Check \'initialization.txt\' is correctly formatted.')
 active_profile = result['profile']
 
 # User input loop
@@ -49,7 +44,7 @@ while input_list[0] != "QUIT":
         handler.delete(input_list)
     elif cmd == 'HELP':
         handler.help_command(input_list)
-    elif cmd == 'LOAD':  # FIXME - Is there a way to move this logic into handler? I need an obj here, though
+    elif cmd == 'LOAD':
         result = handler.load_command(input_list)
         if result[0]:  # Successful load
             active_profile = result[1]
@@ -58,19 +53,21 @@ while input_list[0] != "QUIT":
     elif cmd == 'PRINT':
         handler.print_command(input_list, active_profile)
     elif cmd == 'PRIORITY':
-        handler.priority(input_list)
+        handler.priority(input_list, active_profile)
     elif cmd == 'RANDOMIZE':
         handler.randomize(input_list, active_profile)
     elif cmd == 'RESETPRIO':  # FIXME - This needs a better name
         results = handler.resetprio(input_list, active_profile)
-        if result[0]:
-            active_profile = result[1]
+        if result['success']:
+            active_profile = result['profile']
     elif cmd == 'SETDEFAULT':
         handler.setdefault(input_list)
     elif cmd == 'SETNAME':
         handler.setname(input_list, active_profile)
-        if result[0]:
-            active_profile = result[1]
+        if result['profile']:
+            active_profile = result['profile']
+        else:
+            print('Error: ' + results['error'])
     elif cmd == 'SETUSERNAME':
         results = handler.setusername(input_list, active_profile)
         if results['success']:
