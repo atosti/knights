@@ -35,6 +35,9 @@ This documentation is currently a list of design practices and unique functional
 8. Commands that make large changes to files should always prompt the user (y/n) before executing.
     * This is especially relevant for operations that are impossible to undo.
 9. Profile names must be the same as their file name in order for many commands to function properly
+10. The function priority() can take a mix of integers and skill-names.
+    * Ex: 'attack defence 10 20 cooking 30' is interpreted as 'attack=10, defence=20, cooking=30'
+    * This function also ignores misspelled skill names and their corresponding integer
 
 ## Features to be Implemented
 See issues labeled [enhancement](https://github.com/atosti/knights/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement).
