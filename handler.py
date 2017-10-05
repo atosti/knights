@@ -18,11 +18,12 @@ def default_skill_map():
     skill_list = ['ATTACK', 'COOKING', 'CRAFTING', 'DEFENCE', 'FIREMAKING', 'FISHING','HITPOINTS','MAGIC',
                   'MINING', 'PRAYER', 'RANGED', 'RUNECRAFTING','SMITHING','STRENGTH','WOODCUTTING']
     default_active_status = 1  # Set to True, but if it's a bool it won't print as a number when cast as a string
+    default_goal = 1
     default_level = 1
     default_priority = 99
     skill_map = {}
     for sk in skill_list:
-        skill_map[sk] = skill.Skill(default_active_status, sk, default_priority, default_level)
+        skill_map[sk] = skill.Skill(default_active_status, default_goal, sk, default_priority, default_level)
     return skill_map
 
 # Checks if a file exists, must be passed the full file name
@@ -58,7 +59,7 @@ def file_write(full_file_path, line_name, value):
 
 # Perform initial setup as dictated by the init file
 # Returns dict with keys 'success', 'profile', 'error'
-# FIXME - If no intialization.txt file is found, it should be generated with default info.
+# FIXME - If no intialization.txt file is found, it should be auto-generated with default info.
 def initialization(file_name, dir_path):
     if not file_exists(file_name, dir_path):  # If no init file exists, return false and default profile
         return {
@@ -165,7 +166,15 @@ def map_read_profile(file_path):
                 if dict_identifier in skill_dict:
                     skill_dict[dict_identifier].active = value
                 else:
-                    sk = skill.Skill(1, dict_identifier, value, 0)
+                    sk = skill.Skill(1, 1, dict_identifier, value, 0)
+                    skill_dict[dict_identifier] = sk
+            elif '_GOAL' in identifier:
+                goal_split = identifier.split('_')
+                dict_identifier = goal_split[0]
+                if dict_identifier in skill_dict:
+                    skill_dict[dict_identifier].goal = value
+                else:
+                    sk = skill.Skill(1, 1, dict_identifier, value, 0)
                     skill_dict[dict_identifier] = sk
             elif '_PRIO' in identifier:
                 prio_split = identifier.split('_')
@@ -173,13 +182,13 @@ def map_read_profile(file_path):
                 if dict_identifier in skill_dict:
                     skill_dict[dict_identifier].priority = value
                 else:
-                    sk = skill.Skill(dict_identifier, value, 0)
+                    sk = skill.Skill(1, 1, dict_identifier, value, 0)
                     skill_dict[dict_identifier] = sk
-            elif '_PRIO' not in identifier and '_ACTIVE' not in identifier:  # Handles plain skill names
+            elif '_PRIO' not in identifier and '_ACTIVE' not in identifier and '_GOAL' not in identifier:  # Skill names
                 if identifier in skill_dict:
                     skill_dict[identifier].level = value
                 else:
-                    sk = skill.Skill(1, identifier, 0, value)
+                    sk = skill.Skill(1, 1, identifier, 0, value)
                     skill_dict[identifier] = sk
             else:
                 return False, None
@@ -228,9 +237,10 @@ def random_priority():
 def skill_dict_output_string(skill_dict):
     string = ''
     for name, sk in sorted(skill_dict.items()):
-        string += '\n'+name+ '='+ str(sk.level)
-        string += '\n'+name+'_ACTIVE='+str(sk.active)
-        string += '\n'+name+'_PRIO='+ str(sk.priority)
+        string+='\n'+name+'='+ str(sk.level)
+        string+='\n'+name+'_ACTIVE='+str(sk.active)
+        string+='\n'+name+'_GOAL='+str(sk.goal)
+        string+='\n'+name+'_PRIO='+str(sk.priority)
     return string
 
 
@@ -251,6 +261,7 @@ def create(input_list):
         return False
     else:
         new_profile = default_profile()  # Init to the default profile
+        # FIXME - This wastes cycles iterating past the size of i we care about
         for i in range(0, len(arg_list)):  # Assign the passed in values to the profile
             if i == 0:
                 new_profile.set_name(arg_list[i])
@@ -300,7 +311,7 @@ def help_command(input_list):
               'LOAD\t\tTakes one argument (profile_name) and loads that profile\n'
               'LOGIN\t\tTakes two arguments (username, password) and logs in the user\n'
               'PRINT\t\tTakes one argument (profile_name) and prints its contents.\n'
-              'PRIORITY\tTakes a list of skills and priorities\n'
+              'PRIO\t\tTakes a list of skills and priorities\n'
               'RANDOMIZE\tTakes an optional parameter of profile name to have its priorities randomized.\n'
               'RESETPRIO\tTakes an optional parameter of profile name to have its priorities reset to 99.\n'
               'START\t\tStarts the bot, allowing it to create its own path to objectives based on its profile.\n'
@@ -331,8 +342,8 @@ def help_command(input_list):
               'active profile.\nBoth profile names and file names(with extensions) are valid.\n'
               '\tPRINT - Prints the currently loaded profile\n' +
               '\tPRINT <PROFILENAME> - Prints the profile with the passed in name if it exists')
-    elif arg_list[0] == 'PRIORITY':
-        print('\tPRIORITY...')
+    elif arg_list[0] == 'PRIO':
+        print('\tPRIO...')
     elif arg_list[0] == 'RANDOMIZE':
         print('Prompts the user (y/n) to continue, and then randomizes the priorities of the loaded profile.\n' +
               '\tRANDOMIZE - Randomizes all the priorities of the currently loaded profile.')
@@ -409,11 +420,10 @@ def print_command(input_list, profile):
             print('Error: Profile not found. Check that file exists and it\'s spelled correctly.')
     return False
 
-# FIXME - Add to the docs that this can take a funky order of skills and levels
-# FIXME     e.g. attack defence 37 34 cooking 17 --> attack=37, defence=34, cooking=17
-# FIXME     So it just needs to be parsed into two lists, strings, and ints, and then those two are compared/assigned
+# FIXME - Should this autocorrect 'defense' to 'defence' when users type it?
+# FIXME   if so, implement this as a helper function.
 # This sets the priority of various skills to passed in values
-def priority(input_list, active_profile):
+def prio(input_list, active_profile):
     arg_list = parse_args(input_list)
     str_list = []
     num_list = []
@@ -432,17 +442,15 @@ def priority(input_list, active_profile):
         elif num > 99:
             num = 99
         file_path = './profiles/' + make_txt_file_name(active_profile.get_name())
-        for line in fileinput.input(file_path, inplace=True):  # Perform the randomization
-            if fnmatch(line, '*' + item + '*'):  # Check if the line relates to priority
-                if fnmatch(line, '*PRIO=*'):
-                    item = line.split('=')
-                    index = 0
-                    if len(item) > 1:  # Count the number of characters to remove from the end of the line
-                        for i in range(0, len(item[1])):
-                            index -= 1
-                    print(line.replace(line.rstrip(), line[:index] + str(num)), end='')
-                else:
-                    print(line, end='')
+        print('item: ' + str(item))
+        for line in fileinput.input(file_path, inplace=True):
+            if fnmatch(line, str(item) + '_PRIO=*'):  # Check the line relates to the current skill's prio
+                item = line.split('=')
+                index = 0
+                if len(item) > 1:  # Count the number of characters to remove from the end of the line
+                    for i in range(0, len(item[1])):
+                        index -= 1
+                print(line.replace(line.rstrip(), line[:index] + str(num)), end='')
             else:
                 print(line, end='')
     return True

@@ -1,7 +1,7 @@
 class Skill:
-    def __init__(self, active, name, priority, level):
-        self.active = active  # FIXME - Implement the ability for skills to be enabled/disabled
-        self.goal = 1  # FIXME - Implement the ability for target level to be changed
+    def __init__(self, active, goal, name, priority, level):
+        self.active = active
+        self.goal = goal
         self.level = level
         self.f2p = True  # FIXME - Implement the ability for skills to be non-f2p
         self.name = name.upper()
