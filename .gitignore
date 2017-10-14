@@ -4,6 +4,7 @@ __pyache__/
 *.pyc
 bin/
 lib/
+man/
 include
 pip-selfcheck.json
 
