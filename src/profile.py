@@ -10,6 +10,13 @@ class Profile:
         self.skill_dict = skill_dict
         self.combat_level = combat_level
 
+    def __eq__(self, other): 
+            return (self.name == other.name and
+            self.username == other.username and
+            self.password == other.password and
+            self.skill_dict == other.skill_dict and
+            self.combat_level == other.combat_level)
+
     def get_combat_level(self):
         return self.combat_level
 
@@ -28,18 +35,61 @@ class Profile:
     def get_skill(self, skill_name):
         return self.skill_dict[skill_name]
 
-    # FIXME - Figure out what line correlates to each skill, then have it populate properly. Also have it handle
-    # FIXME     whatever the result is when an invalid username is passed.
-    def fetch_skills(self):
+    def request_skills(self):
         r = requests.get('http://services.runescape.com/m=hiscore_oldschool/index_lite.ws?player=' + self.username)
-        data = r.text
-        for i in range(0, len(data)):
-            inner = data.split('\n')
-            print(str(i) + ': ' + inner[i])
-            # Format of the info:
-            # 1: (something, total level, total exp)
-            # 2: (something, skill_lvl, skill_exp)
-            # Some of these have -1 as all the fields, I presume that's if they're unleveled
+        skill_list = []
+        if r.status_code == 200:
+             full_text = r.text
+             raw_skill_list = full_text.split('\n')
+             return {
+                 'success': True,
+                 'raw_skill_list': raw_skill_list,
+                 'error': ''}
+        else:
+            return {
+                'success': False,
+                'raw_skill_list': [],
+                'error': 'Request to server failed, error code: '+ r.status_code}
+
+    def process_skills(self, raw_skill_list):
+        index = 0
+        raw_dict = {}
+        for item in raw_skill_list:
+            raw_dict[index] = item
+            index+=1
+        skill_list = [
+            'Overall','Attack','Defence',
+            'Strength','Hitpoints','Ranged',
+            'Prayer','Magic','Cooking',
+            'Woodcutting','Fletching','Fishing',
+            'Firemaking','Crafting','Smithing',
+            'Mining','Herblore','Agility',
+            'Thieving','Slayer','Farming',
+            'Runecraft','Hunter','Construction']
+        processed_dict = {}
+        for index in range(0,len(skill_list)):
+            key = skill_list[index]
+            value = self.__process_raw_skill(raw_dict[index])
+            processed_dict[key] = value
+        return processed_dict
+
+    def __process_raw_skill(self, raw_element):
+        split = raw_element.split(',')
+        if len(split) == 3:
+            element_dict = {}
+            element_dict['Rank'] = split[0]
+            element_dict['Level'] = split[1]
+            element_dict['XP'] = split[2]
+            return element_dict
+        else:
+            return {}
+    
+    def get_highscore_skills(self):
+        request_result = request_skills()
+        if(request_result['success'] == True):
+            return process_skills(request_result['raw_skill_list'])
+        else:
+            return request_result
 
     # FIXME - When calling this update, you should check there are no other profiles with this name
     def set_name(self, name):
