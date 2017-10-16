@@ -8,6 +8,18 @@ import fileinput  # Used for overwriting single lines in files
 from fnmatch import fnmatch, fnmatchcase  # Used for wildcard searches in strings
 
 # -----Helper Functions-----
+def __resource_directory():
+    return "../resources/"
+
+def __profiles_directory():
+    return __resource_directory() + "profiles/"
+
+def __initialization_file_directory():
+    return __resource_directory()
+
+def __initialization_file_path():
+    return __initialization_file_directory() + 'initialization.txt'
+
 # Creates and returns a default Profile object
 def default_profile():
     skill_map = default_skill_map()
@@ -38,8 +50,8 @@ def file_is_empty(file_path):
     return os.stat(file_path).st_size == 0
 
 def file_rename(file_name, name):
-    file_path = './profiles/' + make_txt_file_name(file_name)
-    new_name = './profiles/' + make_txt_file_name(name)
+    file_path = __profiles_directory() + make_txt_file_name(file_name)
+    new_name = __profiles_directory() + make_txt_file_name(name)
     os.rename(file_path, new_name)
     return False
 
@@ -78,7 +90,7 @@ def initialization(file_name, dir_path):
                         'success': False,
                         'profile': default_profile(), 
                         'error': 'No profile specified in initialization file, ' + file_name + '.'}
-                profile_path_base = './profiles/'
+                profile_path_base = dir_path + 'profiles/'
                 if not file_exists(item[1], profile_path_base):
                     return {
                         'success': False,
@@ -107,7 +119,7 @@ def initialization(file_name, dir_path):
 # Returns whether the profile is set as the default in initialization.txt
 def is_default_profile(profile_name):
     profile_file_name = make_txt_file_name(profile_name)  # Ensure this only deals with txt file names
-    with open('initialization.txt', 'r') as f:  # Find the name of the default profile
+    with open(__initialization_file_path(), 'r') as f:  # Find the name of the default profile
         lines = f.read().splitlines()
         old_profile_name = ''
         for i in range(0, len(lines)):
@@ -123,8 +135,8 @@ def is_default_profile(profile_name):
 # FIXME - Change this to return a dict, and change all references to this as well
 def load(profile_name):
     file_name = make_txt_file_name(profile_name)  # Ensure this handles file names
-    file_path = './profiles/' + file_name
-    if file_exists(file_name, './profiles/'):
+    file_path = __profiles_directory() + file_name
+    if file_exists(file_name, __profiles_directory()):
         result = map_read_profile(file_path)
         if result[0]:
             loaded_profile = result[1]
@@ -200,10 +212,10 @@ def map_read_profile(file_path):
 # Creates a new profile file
 def new_profile_file(profile):
     file_name = profile.get_name() + '.txt'
-    dir_path = './profiles/'
+    dir_path = __profiles_directory()
     if file_exists(file_name, dir_path):  # Check the file doesn't already exist
         return False
-    with open('profiles/' + profile.name + '.txt', 'w+') as f:
+    with open(__profiles_directory() + profile.name + '.txt', 'w+') as f:
         f.write('NAME=' +                   profile.name +
                 '\nUSERNAME=' +             profile.get_username() +
                 '\nPASSWORD=' +             profile.get_password() +
@@ -256,7 +268,7 @@ def create(input_list):
     if len(arg_list) < 2:
         print('Error: Too few arguments. Pass the profile_name and username after the command.')
         return False
-    elif file_exists(make_txt_file_name(arg_list[0]), './profiles/'):
+    elif file_exists(make_txt_file_name(arg_list[0]),__profiles_directory()):
         print('Error: Profile already exists. Try updating or deleting it instead.')
         return False
     else:
@@ -279,18 +291,18 @@ def create(input_list):
 def delete(input_list):
     arg_list = parse_args(input_list)
     file_name = make_txt_file_name(arg_list[0])
-    if file_exists(file_name, './profiles/'):
+    if file_exists(file_name, __profiles_directory()):
         new_default_file_name = ''
         if is_default_profile(file_name):  # Handle resetting default profile if it's being deleted
             if not file_name == 'default.txt':  # If deleting default.txt, set DEFAULT_PROFILE to the empty string
                 new_default_file_name = 'default.txt'  # Otherwise, set the default profile to default.txt
-            for line in fileinput.input('initialization.txt', inplace=True):
+            for line in fileinput.input(__initialization_file_path(), inplace=True):
                 if fnmatch(line, 'DEFAULT_PROFILE=*'):
                     print(line.replace(line, 'DEFAULT_PROFILE=' + new_default_file_name), end='')
                 else:
                     print(line, end='')
         if prompt_yn('delete', file_name):
-            file_path = './profiles/' + file_name
+            file_path = __profiles_directory() + file_name
             os.remove(file_path)  # Perform the delete
             return True
         else:
@@ -396,7 +408,7 @@ def print_command(input_list, profile):
     arg_list = parse_args(input_list)
     if len(arg_list) < 1:  # If no arg passed to PRINT, it uses the active profile
         file_name = make_txt_file_name(profile.get_name())
-        dir_path = './profiles/'
+        dir_path = __profiles_directory()
         if file_exists(file_name, dir_path):
             file_path = dir_path + file_name
             with open(file_path) as f:
@@ -408,7 +420,7 @@ def print_command(input_list, profile):
             print('Error: Active profile failed to load. Try reloading it and then printing again.')
     else:
         file_name = make_txt_file_name(arg_list[0])
-        dir_path = './profiles/'
+        dir_path = __profiles_directory()
         if file_exists(file_name, dir_path):
             file_path = dir_path + file_name
             with open(file_path) as f:
@@ -441,7 +453,7 @@ def prio(input_list, active_profile):
             num = 0
         elif num > 99:
             num = 99
-        file_path = './profiles/' + make_txt_file_name(active_profile.get_name())
+        file_path = __profiles_directory() + make_txt_file_name(active_profile.get_name())
         print('item: ' + str(item))
         for line in fileinput.input(file_path, inplace=True):
             if fnmatch(line, str(item) + '_PRIO=*'):  # Check the line relates to the current skill's prio
@@ -469,7 +481,7 @@ def randomize(input_list, profile):
     file_name = make_txt_file_name(active_profile.get_name())
     if not prompt_yn('randomize', file_name):
         return False
-    file_path = './profiles/' + file_name
+    file_path = __profiles_directory() + file_name
     for line in fileinput.input(file_path, inplace=True): # Perform the randomization
         if fnmatch(line, '*PRIO=*'):  # Check if the line relates to priority
             item = line.split('=')
@@ -488,7 +500,7 @@ def resetprio(input_list, active_profile):
     if len(arg_list) < 1:  # Use the active profile
         file_name = make_txt_file_name(active_profile.get_name())
         if prompt_yn('reset', file_name):
-            file_path = './profiles/' + file_name
+            file_path = __profiles_directory() + file_name
             file_write(file_path, '*PRIO=*', '99')
             # FIXME - This needs to reload the current profile with the new load(), right now the active_profile is returned unchanged
             return {
@@ -497,13 +509,13 @@ def resetprio(input_list, active_profile):
                 'error': ''}
     else:  # Fetch the passed in profile (if it exists)
         file_name = make_txt_file_name(arg_list[0])
-        if not file_exists(file_name, './profiles/'):
+        if not file_exists(file_name, __profiles_directory()):
             return {
                 'success': False,
                 'profile': None,
                 'error': 'File does not exist.'}
         if prompt_yn('reset', file_name):
-            file_path = './profiles/' + file_name
+            file_path = __profiles_directory() + file_name
             file_write(file_path, '*PRIO=*', '99')
             # FIXME - This needs to load the new profile, right now the active_profile is unchanged
     return {
@@ -518,8 +530,8 @@ def setdefault(input_list):
         print('Error: No profile name passed.')
         return False
     file_name = make_txt_file_name(arg_list[0])
-    if file_exists(file_name, './profiles/'):
-        with open('initialization.txt', 'r+') as f:  # Find the name of the old profile
+    if file_exists(file_name, __profiles_directory()):
+        with open(__initialization_file_path(), 'r+') as f:  # Find the name of the old profile
             lines = f.read().splitlines()
             old_profile = ''
             for i in range(0, len(lines)):
@@ -528,7 +540,7 @@ def setdefault(input_list):
                     if len(item) > 1:
                         old_profile = item[1]
                     i = len(lines)  # Exit the loop
-        for line in fileinput.input('initialization.txt', inplace=True):
+        for line in fileinput.input(__initialization_file_path(), inplace=True):
             # The comma prevents line breaks, and the end='' prevents a newline character
             print(line.replace('DEFAULT_PROFILE=' + old_profile, 'DEFAULT_PROFILE=' + file_name), end='')
         return True
@@ -551,13 +563,13 @@ def setname(input_list, active_profile):
             'profile': None,
             'error': 'Failed to load active profile.'}
     old_file_name = make_txt_file_name(active_profile.get_name())
-    profile_path = './profiles/' + old_file_name
+    profile_path = __profiles_directory() + old_file_name
     file_write(profile_path, 'NAME', arg_list[0])
     file_rename(old_file_name, arg_list[0])
     active_profile.set_name(arg_list[0])  # Update the profile name
     new_file_name = make_txt_file_name(active_profile.get_name())
     if is_default_profile(old_file_name):  # Check if this profile is set as the default
-        file_write('./initialization.txt', 'DEFAULT_PROFILE', new_file_name)
+        file_write(__initialization_file_path(), 'DEFAULT_PROFILE', new_file_name)
     return {
         'success': True,
         'profile': active_profile,
@@ -580,7 +592,7 @@ def setusername(input_list, active_profile):
             'error': 'Failed to load active profile.'}
     active_profile.set_username(arg_list[0])
     file_name = make_txt_file_name(active_profile.get_name())
-    full_file_path = './profiles/' + file_name
+    full_file_path = __profiles_directory() + file_name
     file_write(full_file_path, 'USERNAME=', arg_list[0])
     # FIXME - Check if this name is used in initialization.txt - resetting initialization.txt should be a helper
     return {

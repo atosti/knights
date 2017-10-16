@@ -14,7 +14,7 @@ import image
 # FIXME - Implement a command to change whether skills are enabled or disabled
 
 # Run initialization
-result = handler.initialization('initialization.txt', './')
+result = handler.initialization('initialization.txt', '../resources/')
 if not result['success']:
     print('Error: '+ result['error'])
 active_profile = result['profile']
